@@ -167,19 +167,46 @@
 
             <!-- List of Submissions -->
             <div class="glass-card p-6 mt-6">
-                <h3 class="text-lg font-medium text-gray-700 mb-4"><i class="fa-solid fa-clock-rotate-left text-primary mr-2"></i> รายชื่อผู้ส่งรายงานล่าสุด</h3>
+                <h3 class="text-lg font-medium text-gray-700 mb-4"><i class="fa-solid fa-list text-primary mr-2"></i> รายชื่อผู้ส่งรายงาน</h3>
+                
+                <!-- Search & Filter (NEW) -->
+                <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></div>
+                        <input type="text" id="searchName" placeholder="ค้นหาชื่อ-นามสกุล..." class="w-full pl-10 pr-4 py-2 border border-gray-200 bg-gray-50/50 text-gray-800 rounded-xl focus:border-blue-500 focus:bg-white" oninput="filterDashboardTable()">
+                    </div>
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><i class="fa-solid fa-filter"></i></div>
+                        <select id="filterDept" class="w-full pl-10 pr-4 py-2 border border-gray-200 bg-gray-50/50 text-gray-800 rounded-xl appearance-none focus:border-blue-500 focus:bg-white" onchange="filterDashboardTable()">
+                            <option value="">-- ทุกกลุ่มสาระฯ --</option>
+                            <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+                            <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                            <option value="ศิลปะ">ศิลปะ</option>
+                            <option value="ภาษาไทย">ภาษาไทย</option>
+                            <option value="ภาษาต่างประเทศ">ภาษาต่างประเทศ</option>
+                            <option value="สังคมศึกษา ศาสนาและวัฒนธรรม">สังคมศึกษา ศาสนาและวัฒนธรรม</option>
+                            <option value="การงานอาชีพ">การงานอาชีพ</option>
+                            <option value="สุขศึกษาและพลศึกษา">สุขศึกษาและพลศึกษา</option>
+                            <option value="กิจกรรมพัฒนาผู้เรียน">กิจกรรมพัฒนาผู้เรียน</option>
+                            <option value="ฝ่ายบริหาร">ฝ่ายบริหาร</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400"><i class="fa-solid fa-chevron-down text-sm"></i></div>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-100">
                                 <th class="p-3 text-sm font-medium text-gray-600 rounded-tl-xl">วันที่ส่ง</th>
                                 <th class="p-3 text-sm font-medium text-gray-600">ชื่อ-นามสกุล</th>
                                 <th class="p-3 text-sm font-medium text-gray-600">กลุ่มสาระฯ</th>
-                                <th class="p-3 text-sm font-medium text-gray-600 text-center rounded-tr-xl">สถานะ</th>
+                                <th class="p-3 text-sm font-medium text-gray-600 text-center">สถานะ</th>
+                                <th class="p-3 text-sm font-medium text-gray-600 text-center rounded-tr-xl">ความคิดเห็น</th>
                             </tr>
                         </thead>
                         <tbody id="public-table-body" class="text-sm">
-                            <tr><td colspan="4" class="p-6 text-center text-gray-400">กำลังโหลดข้อมูล...</td></tr>
+                            <tr><td colspan="5" class="p-6 text-center text-gray-400">กำลังโหลดข้อมูล...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -328,11 +355,11 @@
         // ==========================================
         async function fetchDataForDashboard() {
             const tbody = document.getElementById('public-table-body');
-            tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center"><i class="fa-solid fa-circle-notch fa-spin text-primary text-2xl"></i><p class="mt-2 text-gray-500">กำลังโหลดข้อมูล...</p></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center"><i class="fa-solid fa-circle-notch fa-spin text-primary text-2xl"></i><p class="mt-2 text-gray-500">กำลังโหลดข้อมูล...</p></td></tr>`;
             
             const data = await fetchData();
             if(!data) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-red-500">ไม่สามารถดึงข้อมูลได้ โปรดลองอีกครั้ง</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500">ไม่สามารถดึงข้อมูลได้ โปรดลองอีกครั้ง</td></tr>`;
                 return;
             }
 
@@ -349,21 +376,48 @@
             });
             renderChart(Object.keys(deptCounts), Object.values(deptCounts));
 
-            // ตารางรายชื่อ
+            // เรียกใช้ฟังก์ชันแยกเพื่อสร้างตารางทั้งหมด
+            renderPublicTable(globalData);
+        }
+
+        // ฟังก์ชันใหม่: ค้นหาและกรองข้อมูล
+        function filterDashboardTable() {
+            const searchName = document.getElementById('searchName').value.toLowerCase();
+            const filterDept = document.getElementById('filterDept').value;
+            
+            const filteredData = globalData.filter(row => {
+                const matchName = row.name.toLowerCase().includes(searchName);
+                const matchDept = filterDept === "" || row.dept === filterDept;
+                return matchName && matchDept;
+            });
+            
+            renderPublicTable(filteredData);
+        }
+
+        // ฟังก์ชันใหม่: วาดตารางข้อมูลสาธารณะ
+        function renderPublicTable(dataToRender) {
+            const tbody = document.getElementById('public-table-body');
             tbody.innerHTML = '';
-            if(data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-500">ยังไม่มีข้อมูลการส่งรายงาน</td></tr>`;
+            
+            if(dataToRender.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500">ไม่พบข้อมูลที่ค้นหา</td></tr>`;
                 return;
             }
 
-            data.slice(0, 10).forEach(row => { 
+            dataToRender.forEach(row => { 
                 let tr = document.createElement('tr');
                 tr.className = "border-b border-gray-50 hover:bg-gray-50/50 transition";
+                
+                let commentHtml = row.comment 
+                    ? `<span class="text-xs text-gray-600 italic bg-gray-50 border border-gray-200 px-2 py-1 rounded inline-block max-w-[150px] sm:max-w-[200px] truncate" title="${row.comment}">"${row.comment}"</span>` 
+                    : `<span class="text-gray-300">-</span>`;
+
                 tr.innerHTML = `
                     <td class="p-3 text-gray-500">${formatDate(row.timestamp)}</td>
                     <td class="p-3 font-medium text-gray-700">${row.name}</td>
                     <td class="p-3 text-gray-500"><span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs border border-blue-100">${row.dept}</span></td>
                     <td class="p-3 text-center">${getStatusBadge(row.status)}</td>
+                    <td class="p-3 text-center">${commentHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
